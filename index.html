@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STRAVION AI Agent</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap');
+
+  :root {
+    --navy: #101920;
+    --gold: #C9A96E;
+    --gold-dark: #85714D;
+    --gold-light: #e8d5a8;
+    --cream: #F5F0E8;
+    --white: #FAFAF8;
+    --gray: #8a8a8a;
+    --gray-light: #e8e4dc;
+    --surface: #1a2530;
+    --surface2: #243040;
+    --red: #c0392b;
+    --green: #2d6a4f;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--navy);
+    color: var(--white);
+    font-family: 'Outfit', sans-serif;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* HEADER */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px;
+    border-bottom: 1px solid rgba(201,169,110,0.2);
+    background: rgba(16,25,32,0.95);
+    backdrop-filter: blur(10px);
+    flex-shrink: 0;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo-mark {
+    width: 32px;
+    height: 32px;
+    background: var(--gold);
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .logo-text {
+    font-family: 'DM Serif Display', serif;
+    font-size: 18px;
+    letter-spacing: 0.08em;
+    color: var(--gold);
+  }
+
+  .logo-sub {
+    font-size: 11px;
+    color: var(--gray);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-top: 1px;
+  }
+
+  /* MODE SELECTOR */
+  .modes {
+    display: flex;
+    gap: 6px;
+    background: var(--surface);
+    padding: 4px;
+    border-radius: 10px;
+    border: 1px solid rgba(201,169,110,0.15);
+  }
+
+  .mode-btn {
+    padding: 6px 14px;
+    border: none;
+    border-radius: 7px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--gray);
+    background: transparent;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+
+  .mode-btn.active {
+    background: var(--gold);
+    color: var(--navy);
+  }
+
+  .mode-btn:hover:not(.active) {
+    color: var(--gold-light);
+    background: rgba(201,169,110,0.08);
+  }
+
+  /* MAIN LAYOUT */
+  .main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* CHAT AREA */
+  .chat-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    scroll-behavior: smooth;
+  }
+
+  .messages::-webkit-scrollbar { width: 4px; }
+  .messages::-webkit-scrollbar-track { background: transparent; }
+  .messages::-webkit-scrollbar-thumb { background: var(--gold-dark); border-radius: 2px; }
+
+  /* WELCOME */
+  .welcome {
+    text-align: center;
+    padding: 40px 20px;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .welcome h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 32px;
+    color: var(--gold);
+    margin-bottom: 10px;
+  }
+
+  .welcome p {
+    color: var(--gray);
+    font-size: 14px;
+    line-height: 1.6;
+    margin-bottom: 28px;
+  }
+
+  .quick-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    text-align: left;
+  }
+
+  .qa-card {
+    background: var(--surface);
+    border: 1px solid rgba(201,169,110,0.2);
+    border-radius: 12px;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .qa-card:hover {
+    border-color: var(--gold);
+    background: var(--surface2);
+    transform: translateY(-1px);
+  }
+
+  .qa-icon { font-size: 20px; margin-bottom: 6px; }
+  .qa-title { font-size: 13px; font-weight: 600; color: var(--gold-light); margin-bottom: 3px; }
+  .qa-desc { font-size: 11px; color: var(--gray); line-height: 1.4; }
+
+  /* MESSAGES */
+  .msg {
+    display: flex;
+    gap: 12px;
+    max-width: 860px;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .msg.user { flex-direction: row-reverse; margin-left: auto; }
+
+  .msg-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .msg.user .msg-avatar {
+    background: var(--gold);
+    color: var(--navy);
+    font-weight: 700;
+    font-size: 12px;
+  }
+
+  .msg.assistant .msg-avatar {
+    background: var(--surface2);
+    border: 1px solid rgba(201,169,110,0.3);
+    font-size: 16px;
+  }
+
+  .msg-bubble {
+    max-width: calc(100% - 44px);
+  }
+
+  .msg-mode {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--gold-dark);
+    margin-bottom: 5px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .msg-content {
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 14px;
+    line-height: 1.65;
+  }
+
+  .msg.user .msg-content {
+    background: var(--gold);
+    color: var(--navy);
+    font-weight: 500;
+    border-radius: 12px 4px 12px 12px;
+  }
+
+  .msg.assistant .msg-content {
+    background: var(--surface);
+    border: 1px solid rgba(201,169,110,0.12);
+    color: var(--white);
+    border-radius: 4px 12px 12px 12px;
+  }
+
+  .msg-content h3 {
+    font-family: 'DM Serif Display', serif;
+    color: var(--gold);
+    font-size: 16px;
+    margin: 12px 0 6px;
+  }
+
+  .msg-content h3:first-child { margin-top: 0; }
+
+  .msg-content p { margin-bottom: 8px; }
+  .msg-content p:last-child { margin-bottom: 0; }
+
+  .msg-content ul, .msg-content ol {
+    padding-left: 20px;
+    margin: 6px 0;
+  }
+
+  .msg-content li { margin: 4px 0; }
+
+  .msg-content strong { color: var(--gold-light); }
+
+  .msg-content code {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    background: rgba(201,169,110,0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--gold-light);
+  }
+
+  .msg-content pre {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(201,169,110,0.15);
+    border-radius: 8px;
+    padding: 14px;
+    overflow-x: auto;
+    margin: 10px 0;
+  }
+
+  .msg-content pre code {
+    background: transparent;
+    padding: 0;
+    font-size: 12px;
+    color: var(--gold-light);
+  }
+
+  /* LINKEDIN POST CARD */
+  .li-post {
+    background: #fff;
+    color: #1a1a1a;
+    border-radius: 10px;
+    padding: 16px;
+    margin-top: 10px;
+    font-size: 13px;
+    line-height: 1.6;
+    position: relative;
+  }
+
+  .li-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .li-avatar {
+    width: 40px;
+    height: 40px;
+    background: var(--navy);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--gold);
+    font-weight: 700;
+    font-size: 14px;
+  }
+
+  .li-name { font-weight: 700; font-size: 13px; color: #1a1a1a; }
+  .li-title { font-size: 11px; color: #666; }
+
+  .li-text { color: #333; white-space: pre-wrap; }
+
+  .li-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid #e8e4e0;
+  }
+
+  .li-copy-btn {
+    padding: 6px 14px;
+    background: var(--navy);
+    color: var(--gold);
+    border: 1px solid var(--gold-dark);
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    transition: all 0.2s;
+  }
+
+  .li-copy-btn:hover { background: var(--gold); color: var(--navy); }
+
+  /* THINKING */
+  .thinking {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    padding: 10px 0;
+  }
+
+  .think-dots {
+    display: flex;
+    gap: 5px;
+  }
+
+  .think-dot {
+    width: 7px;
+    height: 7px;
+    background: var(--gold);
+    border-radius: 50%;
+    animation: pulse 1.2s ease-in-out infinite;
+  }
+
+  .think-dot:nth-child(2) { animation-delay: 0.2s; }
+  .think-dot:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.3; transform: scale(0.8); }
+    50% { opacity: 1; transform: scale(1.1); }
+  }
+
+  .think-text {
+    font-size: 12px;
+    color: var(--gray);
+    font-family: 'DM Mono', monospace;
+    font-style: italic;
+  }
+
+  /* INPUT AREA */
+  .input-area {
+    padding: 16px 24px 20px;
+    border-top: 1px solid rgba(201,169,110,0.12);
+    background: rgba(16,25,32,0.98);
+    flex-shrink: 0;
+  }
+
+  .mode-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .mode-pill {
+    padding: 3px 10px;
+    background: rgba(201,169,110,0.15);
+    border: 1px solid rgba(201,169,110,0.3);
+    border-radius: 20px;
+    font-size: 11px;
+    color: var(--gold);
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .mode-hint { font-size: 11px; color: var(--gray); }
+
+  .input-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+  }
+
+  textarea {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid rgba(201,169,110,0.2);
+    border-radius: 12px;
+    padding: 12px 16px;
+    color: var(--white);
+    font-family: 'Outfit', sans-serif;
+    font-size: 14px;
+    resize: none;
+    outline: none;
+    min-height: 46px;
+    max-height: 120px;
+    line-height: 1.5;
+    transition: border-color 0.2s;
+  }
+
+  textarea:focus { border-color: rgba(201,169,110,0.5); }
+  textarea::placeholder { color: var(--gray); }
+
+  .send-btn {
+    width: 46px;
+    height: 46px;
+    background: var(--gold);
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+
+  .send-btn:hover { background: var(--gold-light); transform: scale(1.05); }
+  .send-btn:disabled { background: var(--gray); cursor: not-allowed; transform: none; }
+
+  .send-btn svg { width: 18px; height: 18px; fill: var(--navy); }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 220px;
+    border-left: 1px solid rgba(201,169,110,0.12);
+    background: var(--surface);
+    padding: 16px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    flex-shrink: 0;
+  }
+
+  .sidebar-section h4 {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--gold-dark);
+    font-family: 'DM Mono', monospace;
+    margin-bottom: 8px;
+  }
+
+  .sidebar-stat {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-size: 12px;
+  }
+
+  .sidebar-stat .label { color: var(--gray); }
+  .sidebar-stat .value { color: var(--gold-light); font-weight: 600; font-family: 'DM Mono', monospace; }
+
+  .history-item {
+    padding: 8px 10px;
+    background: rgba(201,169,110,0.06);
+    border-radius: 8px;
+    margin-bottom: 6px;
+    font-size: 11px;
+    color: var(--gray);
+    cursor: pointer;
+    transition: all 0.2s;
+    line-height: 1.4;
+    border: 1px solid transparent;
+  }
+
+  .history-item:hover { background: rgba(201,169,110,0.12); border-color: rgba(201,169,110,0.2); color: var(--white); }
+
+  .history-mode {
+    font-size: 9px;
+    color: var(--gold-dark);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 2px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .clear-btn {
+    width: 100%;
+    padding: 8px;
+    background: transparent;
+    border: 1px solid rgba(201,169,110,0.2);
+    border-radius: 8px;
+    color: var(--gray);
+    font-family: 'Outfit', sans-serif;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.04em;
+  }
+
+  .clear-btn:hover { border-color: var(--red); color: #e74c3c; }
+
+  /* SCROLLBAR */
+  .sidebar::-webkit-scrollbar { width: 3px; }
+  .sidebar::-webkit-scrollbar-thumb { background: var(--gold-dark); border-radius: 2px; }
+
+  /* COPY TOAST */
+  .toast {
+    position: fixed;
+    bottom: 80px;
+    right: 24px;
+    background: var(--gold);
+    color: var(--navy);
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s;
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  .toast.show { opacity: 1; transform: translateY(0); }
+
+  @media (max-width: 700px) {
+    .sidebar { display: none; }
+    .modes { gap: 3px; }
+    .mode-btn { padding: 5px 8px; font-size: 10px; }
+    header { padding: 10px 14px; }
+    .messages { padding: 14px; }
+    .input-area { padding: 10px 14px 14px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-mark"></div>
+    <div>
+      <div class="logo-text">STRAVION</div>
+      <div class="logo-sub">AI Operations Agent</div>
+    </div>
+  </div>
+  <div class="modes">
+    <button class="mode-btn active" onclick="setMode('linkedin')" title="LinkedIn Post Generator">✍ LinkedIn</button>
+    <button class="mode-btn" onclick="setMode('search')" title="Web Search">🔍 Research</button>
+    <button class="mode-btn" onclick="setMode('lean')" title="Lean Expert">⚙ Lean Expert</button>
+    <button class="mode-btn" onclick="setMode('chat')" title="General Assistant">💬 Chat</button>
+  </div>
+</header>
+
+<div class="main">
+  <div class="chat-area">
+    <div class="messages" id="messages">
+      <div class="welcome" id="welcome">
+        <h1>Guten Tag, Dejan.</h1>
+        <p>Ihr persönlicher KI-Agent für Operations Excellence.<br>Wählen Sie einen Modus oder starten Sie direkt.</p>
+        <div class="quick-actions">
+          <div class="qa-card" onclick="quickAction('Schreib einen LinkedIn Post über den Unterschied zwischen echten Lean-Experten und Beratern die nur PowerPoints liefern.')">
+            <div class="qa-icon">✍️</div>
+            <div class="qa-title">LinkedIn Post</div>
+            <div class="qa-desc">Lean Experten vs. PowerPoint-Berater</div>
+          </div>
+          <div class="qa-card" onclick="quickAction('Recherchiere die aktuellsten Lean-Methoden und KI-gestützten Prozessoptimierungen 2024/2025 in der Fertigungsindustrie.')">
+            <div class="qa-icon">🔍</div>
+            <div class="qa-title">Research</div>
+            <div class="qa-desc">Aktuelle Lean & KI-Trends 2025</div>
+          </div>
+          <div class="qa-card" onclick="quickAction('Analysiere als erfahrener McKinsey-Ops-Berater: Welche 5 Quick Wins hat ein Metallbau-KMU mit 80 Mitarbeitern typischerweise bei Rüstzeiten und OEE?')">
+            <div class="qa-icon">⚙️</div>
+            <div class="qa-title">Lean Analyse</div>
+            <div class="qa-desc">Quick Wins für KMU Metallbau</div>
+          </div>
+          <div class="qa-card" onclick="quickAction('Erstelle einen STRAVION Akquise-Text für Maschinenbau-KMUs in der DACH-Region, die ihre Produktivität steigern wollen.')">
+            <div class="qa-icon">🎯</div>
+            <div class="qa-title">Akquise-Text</div>
+            <div class="qa-desc">DACH Maschinenbau KMUs</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="input-area">
+      <div class="mode-indicator">
+        <span class="mode-pill" id="modePill">LinkedIn Post</span>
+        <span class="mode-hint" id="modeHint">Schreib deinen Post-Wunsch — prägnant, direkt, STRAVION-Stil</span>
+      </div>
+      <div class="input-row">
+        <textarea id="userInput" placeholder="Ihre Anfrage..." rows="1"
+          onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+        <button class="send-btn" id="sendBtn" onclick="sendMessage()" title="Senden">
+          <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <h4>Session</h4>
+      <div class="sidebar-stat"><span class="label">Nachrichten</span><span class="value" id="statMsgs">0</span></div>
+      <div class="sidebar-stat"><span class="label">Modus</span><span class="value" id="statMode">LinkedIn</span></div>
+      <div class="sidebar-stat"><span class="label">Posts erstellt</span><span class="value" id="statPosts">0</span></div>
+    </div>
+
+    <div class="sidebar-section">
+      <h4>Verlauf</h4>
+      <div id="historyList"><div style="font-size:11px;color:var(--gray);">Noch keine Konversationen.</div></div>
+    </div>
+
+    <div class="sidebar-section">
+      <button class="clear-btn" onclick="clearChat()">🗑 Chat leeren</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">✓ Kopiert!</div>
+
+<script>
+let currentMode = 'linkedin';
+let messageCount = 0;
+let postCount = 0;
+let conversationHistory = [];
+let historyItems = [];
+let isLoading = false;
+
+const SYSTEM_PROMPTS = {
+  linkedin: `Du bist der LinkedIn-Content-Stratege von STRAVION Operations Consulting (Gründer: Dejan Peric, Wittenbach SG, Schweiz). 
+
+STRAVION-STIMME: Direkt. Knapp. Opinionated. Keine Buzzwords, keine Floskeln.
+ZIELGRUPPE: DACH-Entscheider in Produktion, Maschinenbau, Metallbau, KMU-Chefs.
+STIL: Kurze Sätze. Rhetorische Kontraste. Eine starke These am Anfang. Echte Beispiele aus der Praxis (OEE +13%, 500 Maschinenstunden gewonnen, EUR 376k Einsparung, Rüstzeit -5h/Tag).
+FORMAT: Max. 1000 Zeichen. Keine Hashtag-Wüsten. Max. 3-5 relevante Hashtags am Ende. Immer mit einer Engagement-Frage schließen.
+NIEMALS: Generische Phrasen wie "In der heutigen schnelllebigen Welt" oder "Es ist wichtig zu beachten".
+IMMER: Mit konkretem Wert-Statement beginnen. Authentisch. Provokativ wenn nötig.`,
+
+  search: `Du bist ein Senior Research Analyst bei STRAVION Operations Consulting. 
+Du recherchierst aktuelle Trends, Studien und Best Practices zu Lean Management, Prozessoptimierung, OEE, Rüstzeiten, Digitalisierung und Operations Excellence.
+Antworte strukturiert mit: Kernerkenntnisse, aktuelle Daten/Zahlen, praktische Implikationen für KMUs.
+Fokus auf DACH-Markt, Fertigungsindustrie, Maschinenbau, Metallbau.
+Nutze Web-Suche für aktuelle Informationen.
+Sprache: Deutsch, präzise, keine unnötigen Füllwörter.`,
+
+  lean: `Du bist ein Senior Operations & Lean Management Berater mit 40 Jahren Erfahrung — McKinsey Operations Practice, Toyota Production System Expert, ehemaliger Werkleiter in der Automobilindustrie.
+
+DEINE EXPERTISE: TPS, VSM, SMED, TPM, Kaizen, OEE-Optimierung, Rüstzeitreduzierung, Fließfertigung, Pull-Systeme, 5S, Poka Yoke, Andon, JIT.
+DEINE SPRACHE: Direkt. Praktisch. Du hast alles schon gesehen. Keine theoretischen Modelle ohne Praxisbezug.
+DEINE DIAGNOSE: Du erkennst sofort wo die echten Verluste sind — nicht in den Berichten, sondern am Shopfloor.
+DEIN ANSATZ: Erst verstehen, dann messen, dann verbessern. Menschen mitnehmen, nicht überwältigen.
+REFERENZEN: Zitiere echte Fallbeispiele aus deiner Karriere (fiktiv aber realistisch).
+SPRACHE: Deutsch, bestimmt, mit konkreten Zahlen und Benchmarks.`,
+
+  chat: `Du bist der persönliche KI-Assistent von Dejan Peric, Gründer von STRAVION Operations Consulting in Wittenbach, Schweiz.
+STRAVION fokussiert auf Lean Management, Prozessoptimierung und Interim Management für KMUs im DACH-Raum.
+Dejans Hintergrund: 10+ Jahre Fertigungserfahrung, Eidg. Dipl. Produktionsleiter Industrie (HFP), ISO 9001/IATF 16949 Auditor.
+Key Erfolge: OEE +13% bei DGS Druckguss, EUR 376k Einsparung & 500 Maschinenstunden bei Mubea, Rüstzeit -5h/Tag.
+Hilf bei Business Development, Mandantenkommunikation, Strategieentwicklung, Dokumenten und allem was STRAVION voranbringt.
+Sprache: Deutsch, direkt, professionell.`
+};
+
+const MODE_CONFIG = {
+  linkedin: { pill: 'LinkedIn Post', hint: 'Schreib deinen Post-Wunsch — prägnant, direkt, STRAVION-Stil', icon: '✍' },
+  search: { pill: 'Research', hint: 'Wonach soll ich suchen? Trends, Studien, Best Practices...', icon: '🔍' },
+  lean: { pill: 'Lean Expert', hint: 'Stell deine Ops-Frage — ich antworte wie ein McKinsey Veteran', icon: '⚙' },
+  chat: { pill: 'Chat', hint: 'Allgemeine Fragen zu STRAVION, Business Development, Mandaten...', icon: '💬' }
+};
+
+function setMode(mode) {
+  currentMode = mode;
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('modePill').textContent = MODE_CONFIG[mode].pill;
+  document.getElementById('modeHint').textContent = MODE_CONFIG[mode].hint;
+  document.getElementById('statMode').textContent = MODE_CONFIG[mode].pill;
+  conversationHistory = [];
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function quickAction(text) {
+  document.getElementById('userInput').value = text;
+  autoResize(document.getElementById('userInput'));
+  sendMessage();
+}
+
+function addMessage(role, content, mode, isLinkedIn) {
+  const welcome = document.getElementById('welcome');
+  if (welcome) welcome.remove();
+
+  const container = document.getElementById('messages');
+  const div = document.createElement('div');
+  div.className = `msg ${role}`;
+
+  const avatarDiv = `<div class="msg-avatar">${role === 'user' ? 'DP' : '◆'}</div>`;
+  const modeLabel = role === 'assistant' ? `<div class="msg-mode">${MODE_CONFIG[mode]?.icon || '◆'} ${MODE_CONFIG[mode]?.pill || mode}</div>` : '';
+
+  let contentHtml;
+  if (isLinkedIn && role === 'assistant') {
+    contentHtml = buildLinkedInCard(content);
+  } else {
+    contentHtml = `<div class="msg-content">${formatMarkdown(content)}</div>`;
+  }
+
+  div.innerHTML = `${avatarDiv}<div class="msg-bubble">${modeLabel}${contentHtml}</div>`;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+
+  messageCount++;
+  document.getElementById('statMsgs').textContent = messageCount;
+
+  if (role === 'user' && content.length > 30) {
+    addToHistory(content.substring(0, 50) + (content.length > 50 ? '...' : ''), mode);
+  }
+}
+
+function buildLinkedInCard(text) {
+  const escaped = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const id = 'li_' + Date.now();
+  return `
+    <div class="msg-content">
+      <div class="li-post">
+        <div class="li-header">
+          <div class="li-avatar">DP</div>
+          <div>
+            <div class="li-name">Dejan Peric</div>
+            <div class="li-title">Founder & Managing Partner · STRAVION Operations Consulting</div>
+          </div>
+        </div>
+        <div class="li-text" id="${id}">${escaped}</div>
+        <div class="li-actions">
+          <button class="li-copy-btn" onclick="copyPost('${id}')">📋 Kopieren</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function copyPost(id) {
+  const el = document.getElementById(id);
+  navigator.clipboard.writeText(el.textContent).then(() => {
+    showToast();
+    postCount++;
+    document.getElementById('statPosts').textContent = postCount;
+  });
+}
+
+function showToast() {
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+function addToHistory(text, mode) {
+  const list = document.getElementById('historyList');
+  const item = document.createElement('div');
+  item.className = 'history-item';
+  item.innerHTML = `<div class="history-mode">${MODE_CONFIG[mode]?.icon} ${MODE_CONFIG[mode]?.pill}</div>${text}`;
+  list.insertBefore(item, list.firstChild);
+  if (list.children.length > 8) list.removeChild(list.lastChild);
+}
+
+function showThinking() {
+  const container = document.getElementById('messages');
+  const div = document.createElement('div');
+  div.className = 'thinking';
+  div.id = 'thinking';
+  div.innerHTML = `
+    <div style="width:32px;height:32px;border-radius:8px;background:var(--surface2);border:1px solid rgba(201,169,110,0.3);display:flex;align-items:center;justify-content:center;">◆</div>
+    <div class="think-dots">
+      <div class="think-dot"></div>
+      <div class="think-dot"></div>
+      <div class="think-dot"></div>
+    </div>
+    <div class="think-text">Agent denkt nach...</div>`;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+function removeThinking() {
+  const t = document.getElementById('thinking');
+  if (t) t.remove();
+}
+
+function formatMarkdown(text) {
+  return text
+    .replace(/### (.+)/g, '<h3>$1</h3>')
+    .replace(/## (.+)/g, '<h3>$1</h3>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>')
+    .replace(/^- (.+)/gm, '<li>$1</li>')
+    .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
+    .replace(/\n\n/g, '</p><p>')
+    .replace(/^(?!<)(.+)/gm, (m) => m.startsWith('<') ? m : m)
+    .replace(/\n/g, '<br>');
+}
+
+async function sendMessage() {
+  if (isLoading) return;
+  const input = document.getElementById('userInput');
+  const text = input.value.trim();
+  if (!text) return;
+
+  input.value = '';
+  input.style.height = 'auto';
+  isLoading = true;
+  document.getElementById('sendBtn').disabled = true;
+
+  addMessage('user', text, currentMode);
+
+  conversationHistory.push({ role: 'user', content: text });
+
+  showThinking();
+
+  try {
+    const isLinkedInMode = currentMode === 'linkedin';
+    const useSearch = currentMode === 'search';
+
+    const body = {
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      system: SYSTEM_PROMPTS[currentMode],
+      messages: conversationHistory
+    };
+
+    if (useSearch) {
+      body.tools = [{ type: 'web_search_20250305', name: 'web_search' }];
+    }
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+
+    const data = await response.json();
+
+    removeThinking();
+
+    let reply = '';
+    if (data.content) {
+      for (const block of data.content) {
+        if (block.type === 'text') reply += block.text;
+      }
+    }
+
+    if (!reply && data.error) {
+      reply = `⚠️ Fehler: ${data.error.message || 'API-Fehler'}`;
+    }
+
+    conversationHistory.push({ role: 'assistant', content: reply });
+
+    addMessage('assistant', reply, currentMode, isLinkedInMode);
+
+  } catch (err) {
+    removeThinking();
+    addMessage('assistant', `⚠️ Verbindungsfehler: ${err.message}`, currentMode);
+  }
+
+  isLoading = false;
+  document.getElementById('sendBtn').disabled = false;
+  document.getElementById('userInput').focus();
+}
+
+function clearChat() {
+  const container = document.getElementById('messages');
+  container.innerHTML = '';
+  conversationHistory = [];
+  messageCount = 0;
+  document.getElementById('statMsgs').textContent = '0';
+  const welcome = document.createElement('div');
+  welcome.className = 'welcome';
+  welcome.id = 'welcome';
+  welcome.innerHTML = `
+    <h1>Chat geleert.</h1>
+    <p>Bereit für neue Aufgaben.</p>`;
+  container.appendChild(welcome);
+}
+
+document.getElementById('userInput').focus();
+</script>
+</body>
+</html>
